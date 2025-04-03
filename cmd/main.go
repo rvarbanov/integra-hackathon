@@ -14,43 +14,31 @@ const (
 	fileLines = 1000000
 )
 
-type TempTemp struct {
+type OutputData struct {
+	City  string
 	Min   float64
 	Mean  float64
 	Max   float64
 	Count int
 }
 
-type testOutput struct {
-	City string
-	Min  float64
-	Mean float64
-	Max  float64
-}
-
 func main() {
-	// 1. load the input data from the data file
 	file, err := openFile()
 	if err != nil {
 		panic(err)
 	}
 	defer file.Close()
 
-	tempMap := make(map[string][]float64, fileLines)
-	outputData := make(map[string]TempTemp, fileLines)
+	cityMap := make(map[string]OutputData, fileLines)
 
 	scanner := bufio.NewScanner(file)
-
-	lineCounter := 0
 	for scanner.Scan() {
-		lineCounter++
 		line := scanner.Text()
 
-		// slip the line into two parts by ;
-		temp := strings.Split(line, ";")
-		city := temp[0]
+		tempData := strings.Split(line, ";")
+		city := tempData[0]
 
-		temperatureStr := temp[1]
+		temperatureStr := tempData[1]
 		if temperatureStr == "" {
 			panic(nil)
 		}
@@ -59,17 +47,14 @@ func main() {
 			continue
 		}
 
-		temperature, parseErr := strconv.ParseFloat(temp[1], 64)
+		temperature, parseErr := strconv.ParseFloat(tempData[1], 64)
 		if parseErr != nil {
 			panic(parseErr)
 		}
 
-		// TODO: we might be able to calculate the min, max and mean temperature here
-		tempMap[city] = append(tempMap[city], temperature)
-
-		value, ok := outputData[city]
+		value, ok := cityMap[city]
 		if !ok {
-			outputData[city] = TempTemp{
+			cityMap[city] = OutputData{
 				Min:   temperature,
 				Mean:  temperature,
 				Max:   temperature,
@@ -77,6 +62,7 @@ func main() {
 			}
 			continue
 		}
+		value.Count++
 
 		if temperature < value.Min {
 			value.Min = temperature
@@ -86,46 +72,47 @@ func main() {
 			value.Max = temperature
 		}
 
-		value.Count++
+		value.Mean = value.Mean + temperature
 
-		value.Mean = (value.Mean + temperature) / float64(value.Count)
-
-		outputData[city] = value
+		cityMap[city] = value
 	}
 
-	// sort outputData by city name
-	tData := []testOutput{}
-	for city, value := range outputData {
-		tV := testOutput{
-			City: city,
-			Min:  value.Min,
-			Mean: value.Mean,
-			Max:  value.Max,
+	var sData []OutputData
+	for city, value := range cityMap {
+		tV := OutputData{
+			City:  city,
+			Min:   value.Min,
+			Mean:  value.Mean,
+			Max:   value.Max,
+			Count: value.Count,
 		}
 
-		tData = append(tData, tV)
+		sData = append(sData, tV)
 	}
 
-	// sort tData by city name
-	sort.Slice(tData, func(i, j int) bool {
-		return tData[i].City < tData[j].City
+	// sort sData by city name
+	sort.Slice(sData, func(i, j int) bool {
+		return sData[i].City < sData[j].City
 	})
 
-	outputCounter := 0
-	finalOutput := "{"
-	for _, value := range tData {
-		outputCounter++
-		// round up mean temperature to 1 decimal
-		mean := float64(int(value.Mean*10)) / 10.0
+	finalOutput := formatOutput(sData)
 
-		v := fmt.Sprintf("%s=%.1f/%.1f/%.1f, ", value.City, value.Min, mean, value.Max)
-		finalOutput += v
+	fmt.Println(finalOutput)
+}
+
+func formatOutput(data []OutputData) string {
+	finalOutput := "{"
+	for _, value := range data {
+		tempMean := value.Mean / float64(value.Count)
+		mean := float64(int(tempMean*10)) / 10.0
+
+		s := fmt.Sprintf("%s=%.1f/%.1f/%.1f, ", value.City, value.Min, mean, value.Max)
+		finalOutput += s
 	}
 
 	// remove last two chars
 	finalOutput = finalOutput[:len(finalOutput)-2] + "}"
-
-	fmt.Println(finalOutput)
+	return finalOutput
 }
 
 func openFile() (*os.File, error) {
