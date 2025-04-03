@@ -11,7 +11,7 @@ import (
 
 const (
 	filePath  = "../data/measurements.txt"
-	fileLines = 1000000000
+	fileLines = 1000000
 )
 
 type TempTemp struct {
