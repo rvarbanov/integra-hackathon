@@ -27,8 +27,6 @@ The task is to write a golang program which reads the file, calculates the min, 
 
 The file contains 1 billion rows.  In order to facilitate the testing , you are provided with sample files with 100k records and 10 million records. The actual file with 1 billion records is on the Test VM, since this is a 15 gb file, we don’t recommend you download this to your machine.  Download the test files from the below link.
 
-https://integrapartners.sharepoint.com/sites/HackathonDocs/Shared%20Documents/Forms/AllItems.aspx
-
 The specs of the Test VM  is a d32 v6(32 vcpus,128gb ram)
 
 You will have to submit the golang source to your personal git hub repository and share the link with Shiva. He will run it on the VM and publish the results.
